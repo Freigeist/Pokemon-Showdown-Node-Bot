@@ -2,7 +2,8 @@
 	Miscellaneous commands
 */
 
-Settings.addPermissions(['pick', 'randomanswer', 'usage', 'help']);
+Settings.addPermissions(['pick', 'randomanswer', 'usage', 'help', 'translate']);
+var http = require('http');
 
 exports.commands = {
 	choose: 'pick',
@@ -64,5 +65,50 @@ exports.commands = {
 			default:
 				this.reply(this.trad('u') + ': ' + this.cmdToken + cmd + ' [on/off]');
 		}
+	},
+
+	tl: "translate",
+	translate: function (arg, user, room) {
+		var text = "";
+
+		var args = arg.split(",");
+		if (args.length !== 3) return this.restrictReply("Usage: .translate <from>, <to>, <text>; <from/to> may be en/us, es, fr, de, it)", 'translate');
+
+		var fromToLangs = {"en": 1, "us": 1, "de": 1, "fr": 1, "es": 1, "it": 1};
+
+		var from = toId(args[0]);
+		var to = toId(args[1]);
+		var toTrans = ('' + args[2]).trim();
+
+		if (!fromToLangs[from] || !fromToLangs[to])
+			return this.restrictReply("Usage: .translate <from>, <to>, <text>; <from/to> may be en/us, es, fr, de, it)", 'translate');
+
+		var self = this;
+
+		var reqOpt = {
+			hostname: 'www.pokemontrash.com',
+			path: '/api/' + from + '/to/' + to + '/' + toId(toTrans),
+			method: 'GET'
+		};
+
+		var req = http.request(reqOpt, function (res) {
+			var response = '';
+			res.on('data', function (chunk) {
+				response += chunk;
+			});
+			res.on('end', function () {
+				try {
+					var data = JSON.parse(response);
+					if (data.exists === true)
+						text += "The translation of __" + toTrans + "__ (" + from + ") in " + to + " is **" + data.to + "**.";
+					else
+						text += "Could not translate __" + toTrans + "__ from " + from + " to " + to + ".";
+				} catch (e) {
+					text += "There was an error trying to translate...";
+				}
+				self.restrictReply(text, 'translate');
+			});
+		});
+		req.end();
 	}
 };
