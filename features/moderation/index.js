@@ -339,9 +339,9 @@ function parseChat (room, time, by, message) {
 		for (var i = 0; i < bannedPhrases.length; i++) {
 			if (msglow.indexOf(bannedPhrases[i]) > -1) {
 				infractions.push(trad('banword-0', room));
-				totalPointVal += 2;
-				if (pointVal < 2) {
-					pointVal = 2;
+				totalPointVal += 4;
+				if (pointVal < 4) {
+					pointVal = 4;
 					muteMessage = ', ' + trad('automod', room) + ': ' + trad('banword', room);
 				}
 				break;
