@@ -155,6 +155,15 @@ exports.equalOrHigherRank = function (userIdentity, rank) {
 	return false;
 };
 
+exports.getGroup = function (perm) {
+	if (!perm) return true;
+	var globalPermissions = {'voice': '+', 'driver': '%', 'moderator': '@', 'roomowner': '#', 'admin': '~'};
+	if (Config.globalPermissions) {
+		for (var i in Config.globalPermissions) globalPermissions[i] = Config.globalPermissions[i];
+	}
+	return globalPermissions[perm] || true;
+};
+
 exports.getTimeAgo = function (time, lang) {
 	time = Date.now() - time;
 	time = Math.round(time / 1000); // rounds to nearest second
@@ -276,7 +285,7 @@ exports.reloadFeature = function (feature) {
 		if (f.id) {
 			if (Features[f.id] && typeof Features[f.id].destroy === "function") Features[f.id].destroy();
 			Features[f.id] = f;
-			Features[f.id].init();
+			if (typeof Features[f.id].init === "function") Features[f.id].init();
 			info("Feature \"" + f.id + '\" reloaded');
 		} else {
 			return -1;

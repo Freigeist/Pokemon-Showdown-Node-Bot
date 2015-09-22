@@ -89,11 +89,13 @@ Once copied `config.js` from `config-example.js` you can edit config options to 
 **Auth Config**
  - `Config.exceptions`: Specify rank exceptions. Use `userid: true` for full permissions
  - `Config.ranks`: Array of user groups ordered from lowest to highest auth
+ - `Config.globalPermissions`: Global permissions that cannot be changed with `set`
 
 **Commands Config**
  - `Config.commandTokens`: Array of valid command characters. A command character, for example, `.` means `.command` usage
  - `Config.defaultPermission`: Default permision set for `this.can` in commands permissions
  - `Config.permissionExceptions`: Exceptions for commands permissions
+ - `Config.botguide`: Bot commands guide link
 
 **Language Config**
  - `Config.language`: Set default language

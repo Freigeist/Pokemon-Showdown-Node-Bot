@@ -71,6 +71,14 @@ exports.exceptions = {
 
 exports.ranks = ['+', '\u2605', '%', '@', '#', '&', '~'];
 
+exports.globalPermissions = {
+	'voice': '+', //Min rank to broadcast in a server
+	'driver': '%', //Min rank to mute. Also min staff rank
+	'moderator': '@', //Min rank to ban
+	'roomowner': '#', //Rank for using room settings commands like set, lang, mod...
+	'admin': '~' //Rank for using global admin commands
+};
+
 /*
 * Commands configuration
 */
@@ -91,6 +99,8 @@ exports.permissionExceptions = {
 	'searchbattle': '~',
 	'tournament': '@'
 };
+
+exports.botguide = "https://github.com/Ecuacion/Pokemon-Showdown-Node-Bot/blob/master/commands/README.md";
 
 /*
 * Language configuration
@@ -251,7 +261,8 @@ exports.tourDefault = {
 	type: 'elimination',
 	maxUsers: null,
 	timeToStart: 30 * 1000,
-	autodq: 1.5
+	autodq: 1.5,
+	scoutProtect: false
 };
 
 /*
