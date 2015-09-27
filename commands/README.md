@@ -161,12 +161,13 @@ Tournaments
 Commands for Tournaments feature
 
  - `tour` - Start a tournament
- - `tour tier=example, timer=30, users=64, dq=1.5, type=elimination` - Start a tournament with custom and optional parameters
+ - `tour tier=example, timer=30, users=64, dq=1.5, type=elimination, rounds=1` - Start a tournament with custom and optional parameters
   - **tier**: Tournament format / tier
   - **timer**: Max time (in seconds) before starting the tournament
   - **users**: Max number of users (for singups)
   - **dq**: Minutes for autodq
-  - **type**: elimination or roundrobin
+  - **type**: elimination (eli) or roundrobin (rr)
+  - **rounds**: Number of rounds in a elimination or roundrobin (1 or 2)
   - **scout**: set `scout=off` for enabling scout protection
  - `tourhelp` - Help for `tour command`
  - `tourstart` - Force start a tornament

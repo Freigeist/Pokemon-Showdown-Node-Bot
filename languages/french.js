@@ -458,7 +458,7 @@
 		/*
 		* Tour Commands
 		*/
-		tourhelp: {'h': 'tour (format), (secondes pour démarrer ou DÉSACTIVÉE), (minutes autodq ou DÉSACTIVÉE) (Utilisateurs max ou DÉSACTIVÉE), (elimination ou roundrobin). Tous les arguments sont optionnels.'},
+		tourhelp: {'h': 'tour (format), (secondes pour démarrer ou DÉSACTIVÉE), (minutes autodq ou DÉSACTIVÉE) (Utilisateurs max ou DÉSACTIVÉE), (elimination ou roundrobin). Tous les arguments sont optionnels. Aide prolongée:http://git.io/vcfCY'},
 		tourend: {'err': 'Il n\'y a pas un tournoi dans cette salle', 'err2': 'Erreur: Le tournoi a déjà commencé'},
 		tournament: {
 			'e1': 'exige modérateur (@) ou plus pour créer tournois',

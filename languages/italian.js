@@ -458,7 +458,7 @@ exports.translations = {
 		/*
 		* Tour Commands
 		*/
-		tourhelp: {'h': 'tour (formato), (secondi prima dell\'avvio), (minuti di autodq oppure off), (numero massimo di users oppure off), (elimination o roundrobin). tutte le impostazioni sono opzionali.'},
+		tourhelp: {'h': 'tour (formato), (secondi prima dell\'avvio), (minuti di autodq oppure off), (numero massimo di users oppure off), (elimination o roundrobin). tutte le impostazioni sono opzionali. Help esteso: http://git.io/vcfCY'},
 		tourend: {'err': 'Nessun torneo nella room', 'err2': 'Error: Torneo già iniziato'},
 		tournament: {
 			'e1': 'richiede rank moderatore (@) o superiore per creare il torneo',

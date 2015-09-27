@@ -32,7 +32,8 @@ exports.commands = {
 			type: 'elimination',
 			maxUsers: null,
 			timeToStart: 30 * 1000,
-			autodq: 1.5
+			autodq: 1.5,
+			rounds: 1
 		};
 		if (typeof Config.tourDefault === 'object') {
 			for (var i in Config.tourDefault) {
@@ -47,7 +48,8 @@ exports.commands = {
 				maxUsers: null,
 				timeToStart: null,
 				autodq: null,
-				scout: null
+				scout: null,
+				rounds: null
 			};
 			var splArg;
 			for (var i = 0; i < args.length; i++) {
@@ -97,6 +99,9 @@ exports.commands = {
 						case 'type':
 							params.type = valueArg;
 							break;
+						case 'rounds':
+							params.rounds = valueArg;
+							break;
 						case 'scouting':
 						case 'scout':
 						case 'setscout':
@@ -142,8 +147,23 @@ exports.commands = {
 			}
 			if (params.type) {
 				var type = toId(params.type);
+				
+				// Allow short forms
+				if (type === 'eli') type = 'elimination';
+				if (type === 'rr') type = 'roundrobin';
+				
 				if (type !== 'elimination' && type !== 'roundrobin') return this.reply(this.trad('e7'));
 				details.type = type;
+			}
+			if (params.rounds) {
+				var rounds = params.rounds;
+				rounds = parseInt(rounds);
+				console.log("\n\n" + rounds + "\n\n");
+				if (rounds >= 1 && rounds <= 3) {
+					details.rounds = rounds;
+				} else {
+					// TODO: Errormessage
+				}
 			}
 			if (params.scout) {
 				var scout = toId(params.scout);

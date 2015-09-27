@@ -13,8 +13,9 @@ var Tournament = exports.Tournament = (function () {
 	function Tournament (room, details) {
 		this.format = details.format || 'randombattle';
 		this.type = details.type || 'elimination';
+		this.rounds = details.rounds || 1;
 		this.users = 0;
-		this.maxUsers = details.maxUsers || null;
+		this.maxUsers = details.maxUsers || 64;
 		this.signups = false;
 		this.started = false;
 		this.startTimer = null;
@@ -25,11 +26,12 @@ var Tournament = exports.Tournament = (function () {
 	}
 
 	Tournament.prototype.createTour = function () {
-		Bot.say(this.room, '/tournament create ' + this.format + ', ' + this.type);
+		Bot.say(this.room, '/tournament create ' + this.format + ', ' + this.type + ', ' + this.maxUsers + ', ' + this.rounds);
 	};
 	Tournament.prototype.startTimeout = function () {
 		if (!this.timeToStart) return;
 		this.signups = true;
+		if (this.scoutProtect) Bot.say(this.room, '/tournament setscouting disallow');
 		if (this.scoutProtect) Bot.say(this.room, '/tournament setscouting disallow');
 		this.startTimer = setTimeout(function () {
 			this.startTour();
