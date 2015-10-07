@@ -10,49 +10,67 @@ global.toRoomid = function (roomid) {
 };
 
 global.ok = function (str) {
-	if (Config.debug && Config.debug.ok === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 3) return;
+	} else if (Config.debug && Config.debug.ok === false) return;
 	console.log('ok'.green + '\t' + str);
 };
 
 global.info = function (str) {
-	if (Config.debug && Config.debug.info === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 3) return;
+	} else if (Config.debug && Config.debug.info === false) return;
 	console.log('info'.cyan + '\t' + str);
 };
 
 global.error = function (str) {
-	if (Config.debug && Config.debug.error === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 3) return;
+	} else if (Config.debug && Config.debug.error === false) return;
 	console.log('error'.red + '\t' + str);
 };
 
 global.errlog = function (str) {
-	if (Config.debug && Config.debug.errlog === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 3) return;
+	} else if (Config.debug && Config.debug.errlog === false) return;
 	console.log(str);
 };
 
 global.debug = function (str) {
-	if (Config.debug && Config.debug.debug === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 1) return;
+	} else if (Config.debug && Config.debug.debug === false) return;
 	console.log('debug'.blue + '\t' + str);
 };
 
 global.cmdr = function (str) {
-	if (Config.debug && Config.debug.cmdr === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 1) return;
+	} else if (Config.debug && Config.debug.cmdr === false) return;
 	console.log('cmdr'.magenta + '\t' + str);
 };
 
 global.recv = function (str) {
-	if (Config.debug && Config.debug.recv === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 1) return;
+	} else if (Config.debug && Config.debug.recv === false) return;
 	console.log('recv'.grey + '\t' + str);
 };
 
 global.sent = function (str) {
-	if (Config.debug && Config.debug.sent === false) return;
+	if (AppOptions.debugmode) {
+		if (AppOptions.debugmode > 1) return;
+	} else if (Config.debug && Config.debug.sent === false) return;
 	console.log('sent'.grey + '\t' + str);
 };
 
 global.monitor = function (str, type, flag) {
 	switch (type) {
 		case 'room':
-			if (Config.debug && Config.debug.room === false) return;
+			if (AppOptions.debugmode) {
+				if (AppOptions.debugmode > 3) return;
+			} else if (Config.debug && Config.debug.room === false) return;
 			switch (flag) {
 				case 'join':
 					console.log('room'.green + '\t' + str);
@@ -68,7 +86,9 @@ global.monitor = function (str, type, flag) {
 			}
 			break;
 		case 'battle':
-			if (Config.debug && Config.debug.battle === false) return;
+			if (AppOptions.debugmode) {
+				if (AppOptions.debugmode > 2) return;
+			} else if (Config.debug && Config.debug.battle === false) return;
 			switch (flag) {
 				case 'join':
 					console.log('battle'.green + '\t' + str);
@@ -84,16 +104,68 @@ global.monitor = function (str, type, flag) {
 			}
 			break;
 		case 'status':
-			if (Config.debug && Config.debug.status === false) return;
+			if (AppOptions.debugmode) {
+				if (AppOptions.debugmode > 2) return;
+			} else if (Config.debug && Config.debug.status === false) return;
 			console.log('status'.blue + '\t' + str);
 			break;
 		default:
-			if (Config.debug && Config.debug.monitor === false) return;
+			if (AppOptions.debugmode) {
+				if (AppOptions.debugmode > 2) return;
+			} else if (Config.debug && Config.debug.monitor === false) return;
 			console.log('monitor'.cyan + '\t' + str);
 	}
 };
 
 /* Tools */
+
+exports.paseArguments = function (arr) {
+	var opts = {};
+	var arg = '';
+	for (var i = 0; i < arr.length; i++) {
+		arg = arr[i].toLowerCase().trim();
+		if (arg.charAt(0) === '-') {
+			switch (arg) {
+				case '-h':
+				case '-help':
+					opts.help = true;
+					break;
+				case '-production':
+				case '-p':
+					opts.debugmode = 3;
+					break;
+				case '-monitor':
+				case '-m':
+					opts.debugmode = 2;
+					break;
+				case '-debug':
+				case '-d':
+					opts.debugmode = 1;
+					break;
+				case '-test':
+				case '-t':
+					opts.testmode = true;
+					break;
+				case '-c':
+				case '-config':
+					if (!arr[i + 1]) opts.help = true;
+					opts.config = arr[i + 1];
+					i++;
+					break;
+				case '-dt':
+				case '-data':
+					if (!arr[i + 1]) opts.help = true;
+					opts.data = arr[i + 1];
+					i++;
+					break;
+				default:
+					console.log('unknown parametter: ' + arg);
+					opts.help = true;
+			}
+		}
+	}
+	return opts;
+};
 
 exports.toName = function (text) {
 	if (!text) return '';
@@ -139,6 +211,7 @@ exports.getTargetRoom = function (arg) {
 };
 
 exports.equalOrHigherRank = function (userIdentity, rank) {
+	if (typeof rank === "string" && rank.length > 1) rank = Tools.getGroup(rank);
 	if (rank === ' ') return true;
 	if (!Config.ranks) Config.ranks = [];
 	var userId = toId(userIdentity);
@@ -296,18 +369,32 @@ exports.reloadFeature = function (feature) {
 	}
 };
 
+var loadLang = exports.loadLang = function (lang, reloading) {
+	var tradObj = {}, cmdsTra = {}, tempObj = {};
+	fs.readdirSync('./languages/' + lang).forEach(function (file) {
+		if (file.substr(-3) !== '.js') return;
+		if (reloading) Tools.uncacheTree('./languages/' + lang + '/' + file);
+		tempObj = require('./languages/' + lang + '/' + file).translations;
+		for (var t in tempObj) {
+			if (t === "commands") Object.merge(cmdsTra, tempObj[t]);
+			else tradObj[t] = tempObj[t];
+		}
+	});
+	tradObj.commands = cmdsTra;
+	return tradObj;
+};
+
 var translations = exports.translations = {};
 var loadTranslations = exports.loadTranslations = function (reloading) {
 	var errs = [];
-	fs.readdirSync('./languages').forEach(function (file) {
-		if (file.substr(-3) === '.js') {
-			if (reloading) Tools.uncacheTree('./languages/' + file);
+	fs.readdirSync('./languages').forEach(function (lang) {
+		if (fs.lstatSync('./languages/' + lang).isDirectory()) {
 			try {
-				translations[toId(file).substr(0, toId(file).length - 2)] = require('./languages/' + file).translations;
+				translations[lang] = loadLang(lang, reloading);
 			} catch (e) {
 				errlog(e.stack);
-				error("Could not import translations file: ./languages/" + file + " | " + sys.inspect(e));
-				errs.push(file);
+				error("Could not import language: ./languages/" + lang + "/ | " + sys.inspect(e));
+				errs.push(lang);
 			}
 		}
 	});

@@ -2,8 +2,15 @@ data/*.js
 data/*.json
 config.js
 
+#private files
+config
+commands/private.js
+
 #gulp
 gulp-cache
+
+#test
+test-data
 
 # Logs
 logs

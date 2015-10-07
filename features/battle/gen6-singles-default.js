@@ -39,14 +39,15 @@ module.exports = {
 		}
 		return false;
 	},
-	inmune: function (moveData, pokemonA) {
+	inmune: function (moveData, pokemonA, typealt) {
 		var pokedex = require(POKEDEX_FILE).BattlePokedex;
 		var data1 = pokedex[toId(pokemonA)];
-		if (moveData.type === "Ground" && this.has_ability(pokemonA, ["Levitate"])) return true;
-		if (moveData.type === "Water" && this.has_ability(pokemonA, ["Water Absorb", "Dry Skin", "Storm Drain"])) return true;
-		if (moveData.type === "Fire" && this.has_ability(pokemonA, ["Flash Fire"])) return true;
-		if (moveData.type === "Electric" && this.has_ability(pokemonA, ["Volt Absorb", "Lightning Rod"])) return true;
-		if ((moveData.category in {"Physical": 1, "Special": 1}) && this.gen6_get_mux(moveData.type, data1.types) <= 1 && this.has_ability(pokemonA, ["Wonder Guard"])) return true;
+		if (!typealt) typealt = moveData.type;
+		if (typealt === "Ground" && this.has_ability(pokemonA, ["Levitate"])) return true;
+		if (typealt === "Water" && this.has_ability(pokemonA, ["Water Absorb", "Dry Skin", "Storm Drain"])) return true;
+		if (typealt === "Fire" && this.has_ability(pokemonA, ["Flash Fire"])) return true;
+		if (typealt === "Electric" && this.has_ability(pokemonA, ["Volt Absorb", "Lightning Rod"])) return true;
+		if ((moveData.category in {"Physical": 1, "Special": 1}) && this.gen6_get_mux(typealt, data1.types) <= 1 && this.has_ability(pokemonA, ["Wonder Guard"])) return true;
 		return false;
 	},
 	gen6_getDisadvantage: function (pokemonA, pokemonB, inverse) {
@@ -62,8 +63,8 @@ module.exports = {
 	getViableSupportMoves: function (data) {
 		var moves = [];
 		var req = data.request;
-		var pokemonA = data.statusData.self.pokemon[0].species;
-		var pokemonB = data.statusData.foe.pokemon[0].species;
+		var pokemonA = data.statusData.self.pokemon[0].species || '';
+		var pokemonB = data.statusData.foe.pokemon[0].species || '';
 		var dataMove;
 		var pokedex = require(POKEDEX_FILE).BattlePokedex;
 		var movedex = require(MOVEDEX_FILE).BattleMovedex;
@@ -238,8 +239,8 @@ module.exports = {
 		var moves = [];
 		var req = data.request;
 		var inverse = (data.tier && toId(data.tier) === 'inversebattle') ? true : false;
-		var pokemonA = data.statusData.self.pokemon[0].species;
-		var pokemonB = data.statusData.foe.pokemon[0].species;
+		var pokemonA = data.statusData.self.pokemon[0].species || '';
+		var pokemonB = data.statusData.foe.pokemon[0].species || '';
 		var dataMove;
 		var pokedex = require(POKEDEX_FILE).BattlePokedex;
 		var movedex = require(MOVEDEX_FILE).BattleMovedex;
@@ -254,20 +255,21 @@ module.exports = {
 			dataMove = movedex[toId(req.active[0].moves[i].move)];
 			if (!dataMove) continue;
 			//modify move
-			switch (req.active[0].baseAbility) {
-				case 'Aerilate':
-					if (dataMove.type === "Normal") dataMove.type = "Flying";
+			var type = dataMove.type;
+			switch (req.side.pokemon[0].baseAbility) {
+				case 'aerilate':
+					if (dataMove.type === "Normal") type = "Flying";
 					break;
-				case 'Pixilate':
-					if (dataMove.type === "Normal") dataMove.type = "Fairy";
+				case 'pixilate':
+					if (dataMove.type === "Normal") type = "Fairy";
 					break;
-				case 'Refrigerate':
-					if (dataMove.type === "Normal") dataMove.type = "Ice";
+				case 'refrigerate':
+					if (dataMove.type === "Normal") type = "Ice";
 					break;
 			}
-			if (dataMove.name === "Judgment") dataMove.type = data1.types[0];
+			if (dataMove.name === "Judgment") type = data1.types[0];
 			var not_inmune = false;
-			if (req.active[0].baseAbility === "Scrappy" && dataMove.type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
+			if (req.side.pokemon[0].baseAbility === "scrappy" && type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
 			//discard moves
 			if (!(dataMove.category in {"Physical": 1, "Special": 1})) continue;
 
@@ -284,19 +286,21 @@ module.exports = {
 				if (!solarFlag) continue;
 			}
 
-			if (dataMove.type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
-			if (dataMove.type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
-			if (dataMove.type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
-			if (dataMove.type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
-			if (dataMove.type === "Fire" && data.weather && toId(data.weather) === "primordialsea") continue;
-			if (dataMove.type === "Water" && data.weather && toId(data.weather) === "desolateland") continue;
+			if (!(req.side.pokemon[0].baseAbility in {"moldbreaker": 1, "turboblaze": 1, "teravolt": 1})) {
+				if (type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
+				if (type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
+				if (type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
+				if (type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
+				if (type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
+				if (this.inmune(dataMove, pokemonB, type)) continue;
+			}
+			if (type === "Fire" && data.weather && toId(data.weather) === "primordialsea") continue;
+			if (type === "Water" && data.weather && toId(data.weather) === "desolateland") continue;
 			if (dataMove.name === "Fake Out" && data.statusData.self.pokemon[0]['lastMove']) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
-			if (this.inmune(dataMove, pokemonB) && req.active[0].baseAbility !== "Mold Breaker") continue;
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
 			//push
-			if (this.gen6_get_mux(dataMove.type, data2.types, not_inmune, inverse) > 1 || (this.gen6_get_mux(dataMove.type, data2.types, not_inmune, inverse) === 1 && (dataMove.type === data1.types[0] || req.active[0].baseAbility === "Protean" || (data1.types[1] && dataMove.type === data1.types[1])))) {
+			if (this.gen6_get_mux(type, data2.types, not_inmune, inverse) > 1 || (this.gen6_get_mux(type, data2.types, not_inmune, inverse) === 1 && (type === data1.types[0] || req.side.pokemon[0].baseAbility === "protean" || (data1.types[1] && type === data1.types[1])))) {
 				moves.push(i + 1);
 			}
 		}
@@ -306,8 +310,8 @@ module.exports = {
 		var moves = [];
 		var req = data.request;
 		var inverse = (data.tier && toId(data.tier) === 'inversebattle') ? true : false;
-		var pokemonA = data.statusData.self.pokemon[0].species;
-		var pokemonB = data.statusData.foe.pokemon[0].species;
+		var pokemonA = data.statusData.self.pokemon[0].species || '';
+		var pokemonB = data.statusData.foe.pokemon[0].species || '';
 		var dataMove;
 		var pokedex = require(POKEDEX_FILE).BattlePokedex;
 		var movedex = require(MOVEDEX_FILE).BattleMovedex;
@@ -327,41 +331,38 @@ module.exports = {
 				continue;
 			}
 			//modify move
-			switch (req.active[0].baseAbility) {
-				case 'Aerilate':
-					if (dataMove.type === "Normal") dataMove.type = "Flying";
+			var type = dataMove.type;
+			switch (req.side.pokemon[0].baseAbility) {
+				case 'aerilate':
+					if (dataMove.type === "Normal") type = "Flying";
 					break;
-				case 'Pixilate':
-					if (dataMove.type === "Normal") dataMove.type = "Fairy";
+				case 'pixilate':
+					if (dataMove.type === "Normal") type = "Fairy";
 					break;
-				case 'Refrigerate':
-					if (dataMove.type === "Normal") dataMove.type = "Ice";
+				case 'refrigerate':
+					if (dataMove.type === "Normal") type = "Ice";
 					break;
 			}
-			if (dataMove.name === "Judgment") dataMove.type = data1.types[0];
+			if (dataMove.name === "Judgment") type = data1.types[0];
 			var not_inmune = false;
-			if (req.active[0].baseAbility === "Scrappy" && dataMove.type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
+			if (req.side.pokemon[0].baseAbility === "scrappy" && type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
 			//discard moves
 			if (!(dataMove.category in {"Physical": 1, "Special": 1})) continue;
 			if (dataMove.name === "Rapid Spin") continue;
-			if (dataMove.name === "Solar Beam") {
-				var solarFlag = false;
-				if (data.weather && toId(data.weather) in {"sunnyday": 1, "desolateland": 1}) solarFlag = true;
-				if (req.side.pokemon[0].item && req.side.pokemon[0].item === "Power Herb") solarFlag = true;
-				if (!solarFlag) continue;
+			if (!(req.side.pokemon[0].baseAbility in {"moldbreaker": 1, "turboblaze": 1, "teravolt": 1})) {
+				if (type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
+				if (type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
+				if (type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
+				if (type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
+				if (type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
+				if (this.inmune(dataMove, pokemonB, type)) continue;
 			}
-			if (dataMove.type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
-			if (dataMove.type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
-			if (dataMove.type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
-			if (dataMove.type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
-			if (dataMove.type === "Fire" && data.weather && toId(data.weather) === "primordialsea") continue;
-			if (dataMove.type === "Water" && data.weather && toId(data.weather) === "desolateland") continue;
+			if (type === "Fire" && data.weather && toId(data.weather) === "primordialsea") continue;
+			if (type === "Water" && data.weather && toId(data.weather) === "desolateland") continue;
 			if (dataMove.name === "Fake Out" && data.statusData.self.pokemon[0]['lastMove']) continue;
-			if (this.gen6_get_mux(dataMove.type, data2.types, not_inmune, inverse) === 0) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
-			if (this.inmune(dataMove, pokemonB) && req.active[0].baseAbility !== "Mold Breaker") continue;
+			if (this.gen6_get_mux(type, data2.types, not_inmune, inverse) === 0) continue;
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
 			//push
 			moves.push(i + 1);
 		}
@@ -550,7 +551,7 @@ module.exports = {
 		var inverse = (data.tier && toId(data.tier) === 'inversebattle') ? true : false;
 		var pokemonA = req.side.pokemon[idSide].details;
 		if (pokemonA.indexOf(",") !== -1) pokemonA = req.side.pokemon[idSide].details.substr(0, req.side.pokemon[idSide].details.indexOf(","));
-		var pokemonB = data.statusData.foe.pokemon[0].species;
+		var pokemonB = data.statusData.foe.pokemon[0].species || '';
 		var dataMove;
 		var pokedex = require(POKEDEX_FILE).BattlePokedex;
 		var movedex = require(MOVEDEX_FILE).BattleMovedex;
@@ -568,20 +569,21 @@ module.exports = {
 				continue;
 			}
 			//modify move
+			var type = dataMove.type;
 			switch (req.side.pokemon[idSide].baseAbility) {
-				case 'Aerilate':
-					if (dataMove.type === "Normal") dataMove.type = "Flying";
+				case 'aerilate':
+					if (dataMove.type === "Normal") type = "Flying";
 					break;
-				case 'Pixilate':
-					if (dataMove.type === "Normal") dataMove.type = "Fairy";
+				case 'pixilate':
+					if (dataMove.type === "Normal") type = "Fairy";
 					break;
-				case 'Refrigerate':
-					if (dataMove.type === "Normal") dataMove.type = "Ice";
+				case 'refrigerate':
+					if (dataMove.type === "Normal") type = "Ice";
 					break;
 			}
-			if (dataMove.name === "Judgment") dataMove.type = data1.types[0];
+			if (dataMove.name === "Judgment") type = data1.types[0];
 			var not_inmune = false;
-			if (req.side.pokemon[idSide].baseAbility === "Scrappy" && dataMove.type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
+			if (req.side.pokemon[idSide].baseAbility === "scrappy" && type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
 			//discard moves
 			if (!(dataMove.category in {"Physical": 1, "Special": 1})) continue;
 			if (dataMove.name === "Rapid Spin") {
@@ -595,448 +597,23 @@ module.exports = {
 				}
 				if (isLastPoke) continue;
 			}
-			if (dataMove.type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
-			if (dataMove.type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
-			if (dataMove.type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
-			if (dataMove.type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
-			if (dataMove.type === "Fire" && data.weather && toId(data.weather) === "primordialsea") continue;
-			if (dataMove.type === "Water" && data.weather && toId(data.weather) === "desolateland") continue;
+			if (!(req.side.pokemon[idSide].baseAbility in {"moldbreaker": 1, "turboblaze": 1, "teravolt": 1})) {
+				if (type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
+				if (type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
+				if (type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
+				if (type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
+				if (type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
+				if (this.inmune(dataMove, pokemonB, type)) continue;
+			}
+			if (type === "Fire" && data.weather && toId(data.weather) === "primordialsea") continue;
+			if (type === "Water" && data.weather && toId(data.weather) === "desolateland") continue;
 			if (this.gen6_get_mux(dataMove.type, data2.types, not_inmune, inverse) === 0) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
-			if (this.inmune(dataMove, pokemonB) && req.side.pokemon[idSide].baseAbility !== "Mold Breaker") continue;
-
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
 			//push
 			moves.push(i + 1);
 		}
 		return moves;
 	},
-	TypeChartGen6: {
-		"Bug": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 1,
-				"Flying": 1,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 2,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"atk":30, "def":30, "spd":30}
-		},
-		"Dark": {
-			damageTaken: {
-				"Bug": 1,
-				"Dark": 2,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 1,
-				"Fighting": 1,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 2,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 3,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {}
-		},
-		"Dragon": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 1,
-				"Electric": 2,
-				"Fairy": 1,
-				"Fighting": 0,
-				"Fire": 2,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 0,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 2
-			},
-			HPivs: {"atk":30}
-		},
-		"Electric": {
-			damageTaken: {
-				par: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 2,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 0,
-				"Flying": 2,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 1,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 2,
-				"Water": 0
-			},
-			HPivs: {"spa":30}
-		},
-		"Fairy": {
-			damageTaken: {
-				"Bug": 2,
-				"Dark": 2,
-				"Dragon": 3,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 1,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 1,
-				"Water": 0
-			}
-		},
-		"Fighting": {
-			damageTaken: {
-				"Bug": 2,
-				"Dark": 2,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 1,
-				"Fighting": 0,
-				"Fire": 0,
-				"Flying": 1,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 1,
-				"Rock": 2,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"def":30, "spa":30, "spd":30, "spe":30}
-		},
-		"Fire": {
-			damageTaken: {
-				brn: 3,
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 2,
-				"Fighting": 0,
-				"Fire": 2,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 1,
-				"Ice": 2,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 2,
-				"Water": 1
-			},
-			HPivs: {"atk":30, "spa":30, "spe":30}
-		},
-		"Flying": {
-			damageTaken: {
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 1,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 3,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"hp":30, "atk":30, "def":30, "spa":30, "spd":30}
-		},
-		"Ghost": {
-			damageTaken: {
-				trapped: 3,
-				"Bug": 2,
-				"Dark": 1,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 3,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 1,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 3,
-				"Poison": 2,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"def":30, "spd":30}
-		},
-		"Grass": {
-			damageTaken: {
-				powder: 3,
-				"Bug": 1,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 2,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 1,
-				"Flying": 1,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 2,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 1,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 2
-			},
-			HPivs: {"atk":30, "spa":30}
-		},
-		"Ground": {
-			damageTaken: {
-				sandstorm: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 3,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 1,
-				"Ground": 0,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 2,
-				"Psychic": 0,
-				"Rock": 2,
-				"Steel": 0,
-				"Water": 1
-			},
-			HPivs: {"spa":30, "spd":30}
-		},
-		"Ice": {
-			damageTaken: {
-				hail: 3,
-				frz: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 1,
-				"Fire": 1,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 2,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 1,
-				"Water": 0
-			},
-			HPivs: {"atk":30, "def":30}
-		},
-		"Normal": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 1,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 3,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			}
-		},
-		"Poison": {
-			damageTaken: {
-				psn: 3,
-				tox: 3,
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 2,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 1,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 2,
-				"Psychic": 1,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"def":30, "spa":30, "spd":30}
-		},
-		"Psychic": {
-			damageTaken: {
-				"Bug": 1,
-				"Dark": 1,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 1,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 2,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"atk":30, "spe":30}
-		},
-		"Rock": {
-			damageTaken: {
-				sandstorm: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 1,
-				"Fire": 2,
-				"Flying": 2,
-				"Ghost": 0,
-				"Grass": 1,
-				"Ground": 1,
-				"Ice": 0,
-				"Normal": 2,
-				"Poison": 2,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 1,
-				"Water": 1
-			},
-			HPivs: {"def":30, "spd":30, "spe":30}
-		},
-		"Steel": {
-			damageTaken: {
-				psn: 3,
-				tox: 3,
-				sandstorm: 3,
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 2,
-				"Electric": 0,
-				"Fairy": 2,
-				"Fighting": 1,
-				"Fire": 1,
-				"Flying": 2,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 1,
-				"Ice": 2,
-				"Normal": 2,
-				"Poison": 3,
-				"Psychic": 2,
-				"Rock": 2,
-				"Steel": 2,
-				"Water": 0
-			},
-			HPivs: {"spd":30}
-		},
-		"Water": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 1,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 2,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 1,
-				"Ground": 0,
-				"Ice": 2,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 2,
-				"Water": 2
-			},
-			HPivs: {"atk":30, "def":30, "spa":30}
-		}
-	}
+	TypeChartGen6: Tools.BattleTypeChart
 };

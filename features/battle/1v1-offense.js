@@ -48,14 +48,15 @@ module.exports = {
 		}
 		return false;
 	},
-	inmune: function (moveData, pokemonA) {
+	inmune: function (moveData, pokemonA, typealt) {
 		var pokedex = require(POKEDEX_FILE).BattlePokedex;
 		var data1 = pokedex[toId(pokemonA)];
-		if (moveData.type === "Ground" && this.has_ability(pokemonA, ["Levitate"])) return true;
-		if (moveData.type === "Water" && this.has_ability(pokemonA, ["Water Absorb", "Dry Skin", "Storm Drain"])) return true;
-		if (moveData.type === "Fire" && this.has_ability(pokemonA, ["Flash Fire"])) return true;
-		if (moveData.type === "Electric" && this.has_ability(pokemonA, ["Volt Absorb", "Lightning Rod"])) return true;
-		if ((moveData.category in {"Physical": 1, "Special": 1}) && this.gen6_get_mux(moveData.type, data1.types) <= 1 && this.has_ability(pokemonA, ["Wonder Guard"])) return true;
+		if (!typealt) typealt = moveData.type;
+		if (typealt === "Ground" && this.has_ability(pokemonA, ["Levitate"])) return true;
+		if (typealt === "Water" && this.has_ability(pokemonA, ["Water Absorb", "Dry Skin", "Storm Drain"])) return true;
+		if (typealt === "Fire" && this.has_ability(pokemonA, ["Flash Fire"])) return true;
+		if (typealt === "Electric" && this.has_ability(pokemonA, ["Volt Absorb", "Lightning Rod"])) return true;
+		if ((moveData.category in {"Physical": 1, "Special": 1}) && this.gen6_get_mux(typealt, data1.types) <= 1 && this.has_ability(pokemonA, ["Wonder Guard"])) return true;
 		return false;
 	},
 	getBestLead: function (data) {
@@ -145,38 +146,45 @@ module.exports = {
 			}
 			if (typeof dataMove.basePower !== "number" || !dataMove.basePower) continue;
 			if (dataMove.name in blacklistedMoves) continue;
-			switch (req.active[0].baseAbility) {
-				case 'Aerilate':
-					if (dataMove.type === "Normal") dataMove.type = "Flying";
+			var type = dataMove.type;
+			switch (req.side.pokemon[0].baseAbility) {
+				case 'aerilate':
+					if (dataMove.type === "Normal") type = "Flying";
 					break;
-				case 'Pixilate':
-					if (dataMove.type === "Normal") dataMove.type = "Fairy";
+				case 'pixilate':
+					if (dataMove.type === "Normal") type = "Fairy";
 					break;
-				case 'Refrigerate':
-					if (dataMove.type === "Normal") dataMove.type = "Ice";
+				case 'refrigerate':
+					if (dataMove.type === "Normal") type = "Ice";
 					break;
 			}
-			if (dataMove.name === "Judgment") dataMove.type = data1.types[0];
+			if (dataMove.name === "Judgment") type = data1.types[0];
 			if (dataMove.name === "Hyperspace Fury" && data1.name !== 'Hoopa-Unbound') continue;
 			var not_inmune = false;
-			if (req.active[0].baseAbility === "Scrappy" && dataMove.type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
+			if (req.side.pokemon[0].baseAbility === "scrappy" && type in {"Normal": 1, "Fighting": 1}) not_inmune = true;
 			if (dataMove.category === "Special") {
 				basePower = dataMove.basePower * actPoke.stats['spa'];
 			} else {
 				basePower = dataMove.basePower * actPoke.stats['atk'];
 			}
 			for (var l = 0; l < data1.types.length; l++) {
-				if (data1.types[l] === dataMove.type) {
+				if (data1.types[l] === type) {
 					basePower *= 1.5;
 					break;
 				}
 			}
-			if (dataMove.type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
+			if (!(req.side.pokemon[0].baseAbility in {"moldbreaker": 1, "turboblaze": 1, "teravolt": 1})) {
+				if (type === "Grass" && data.statusData.foe.pokemon[0].ability && data.statusData.foe.pokemon[0].ability === "Sap Sipper") continue;
+				if (type === "Electric" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Lightning Rod" || data.statusData.foe.pokemon[0].ability === "Volt Absorb" || data.statusData.foe.pokemon[0].ability === "Motor Drive")) continue;
+				if (type === "Ground" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Levitate")) continue;
+				if (type === "Fire" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Flash Fire")) continue;
+				if (type === "Water" && data.statusData.foe.pokemon[0].ability && (data.statusData.foe.pokemon[0].ability === "Water Absorb" || data.statusData.foe.pokemon[0].ability === "Dry Skin" || data.statusData.foe.pokemon[0].ability === "Storm Drain")) continue;
+				if (this.inmune(dataMove, pokemonB, type)) continue;
+			}
 			if (dataMove.name === "Fake Out" && data.statusData.self.pokemon[0]['lastMove']) continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
-			if (dataMove.type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
-			if (this.inmune(dataMove, pokemonB) && !(toId(actPoke.baseAbility) in {'moldbreaker': 1, 'teravolt': 1, 'turboblaze': 1})) basePower = 0;
-			basePower *= this.gen6_get_mux(dataMove.type, data2.types, not_inmune);
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['item'] && data.statusData.foe.pokemon[0]['item'] === "Air Balloon") continue;
+			if (type === "Ground" && data.statusData.foe.pokemon[0]['volatiles'] && data.statusData.foe.pokemon[0]['volatiles']['Magnet Rise']) continue;
+			basePower *= this.gen6_get_mux(type, data2.types, not_inmune);
 			if (data.statusData.self.pokemon[0]['boost']) {
 				if (dataMove.category === "Special" && data.statusData.self.pokemon[0]['boost']['spa']) {
 					if (data.statusData.self.pokemon[0]['boost']['spa'] > 0) basePower *= (1 + data.statusData.self.pokemon[0]['boost']['spa'] * 0.5);
@@ -292,431 +300,5 @@ module.exports = {
 	receive: function (room, args, kwargs) {
 		return; //do nothing, data is suffient
 	},
-	TypeChartGen6: {
-		"Bug": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 1,
-				"Flying": 1,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 2,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"atk":30, "def":30, "spd":30}
-		},
-		"Dark": {
-			damageTaken: {
-				"Bug": 1,
-				"Dark": 2,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 1,
-				"Fighting": 1,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 2,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 3,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {}
-		},
-		"Dragon": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 1,
-				"Electric": 2,
-				"Fairy": 1,
-				"Fighting": 0,
-				"Fire": 2,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 0,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 2
-			},
-			HPivs: {"atk":30}
-		},
-		"Electric": {
-			damageTaken: {
-				par: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 2,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 0,
-				"Flying": 2,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 1,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 2,
-				"Water": 0
-			},
-			HPivs: {"spa":30}
-		},
-		"Fairy": {
-			damageTaken: {
-				"Bug": 2,
-				"Dark": 2,
-				"Dragon": 3,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 1,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 1,
-				"Water": 0
-			}
-		},
-		"Fighting": {
-			damageTaken: {
-				"Bug": 2,
-				"Dark": 2,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 1,
-				"Fighting": 0,
-				"Fire": 0,
-				"Flying": 1,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 1,
-				"Rock": 2,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"def":30, "spa":30, "spd":30, "spe":30}
-		},
-		"Fire": {
-			damageTaken: {
-				brn: 3,
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 2,
-				"Fighting": 0,
-				"Fire": 2,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 1,
-				"Ice": 2,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 2,
-				"Water": 1
-			},
-			HPivs: {"atk":30, "spa":30, "spe":30}
-		},
-		"Flying": {
-			damageTaken: {
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 1,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 3,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"hp":30, "atk":30, "def":30, "spa":30, "spd":30}
-		},
-		"Ghost": {
-			damageTaken: {
-				trapped: 3,
-				"Bug": 2,
-				"Dark": 1,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 3,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 1,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 3,
-				"Poison": 2,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"def":30, "spd":30}
-		},
-		"Grass": {
-			damageTaken: {
-				powder: 3,
-				"Bug": 1,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 2,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 1,
-				"Flying": 1,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 2,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 1,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 2
-			},
-			HPivs: {"atk":30, "spa":30}
-		},
-		"Ground": {
-			damageTaken: {
-				sandstorm: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 3,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 1,
-				"Ground": 0,
-				"Ice": 1,
-				"Normal": 0,
-				"Poison": 2,
-				"Psychic": 0,
-				"Rock": 2,
-				"Steel": 0,
-				"Water": 1
-			},
-			HPivs: {"spa":30, "spd":30}
-		},
-		"Ice": {
-			damageTaken: {
-				hail: 3,
-				frz: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 1,
-				"Fire": 1,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 2,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 1,
-				"Steel": 1,
-				"Water": 0
-			},
-			HPivs: {"atk":30, "def":30}
-		},
-		"Normal": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 1,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 3,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			}
-		},
-		"Poison": {
-			damageTaken: {
-				psn: 3,
-				tox: 3,
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 2,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 1,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 2,
-				"Psychic": 1,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"def":30, "spa":30, "spd":30}
-		},
-		"Psychic": {
-			damageTaken: {
-				"Bug": 1,
-				"Dark": 1,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 2,
-				"Fire": 0,
-				"Flying": 0,
-				"Ghost": 1,
-				"Grass": 0,
-				"Ground": 0,
-				"Ice": 0,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 2,
-				"Rock": 0,
-				"Steel": 0,
-				"Water": 0
-			},
-			HPivs: {"atk":30, "spe":30}
-		},
-		"Rock": {
-			damageTaken: {
-				sandstorm: 3,
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 0,
-				"Fairy": 0,
-				"Fighting": 1,
-				"Fire": 2,
-				"Flying": 2,
-				"Ghost": 0,
-				"Grass": 1,
-				"Ground": 1,
-				"Ice": 0,
-				"Normal": 2,
-				"Poison": 2,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 1,
-				"Water": 1
-			},
-			HPivs: {"def":30, "spd":30, "spe":30}
-		},
-		"Steel": {
-			damageTaken: {
-				psn: 3,
-				tox: 3,
-				sandstorm: 3,
-				"Bug": 2,
-				"Dark": 0,
-				"Dragon": 2,
-				"Electric": 0,
-				"Fairy": 2,
-				"Fighting": 1,
-				"Fire": 1,
-				"Flying": 2,
-				"Ghost": 0,
-				"Grass": 2,
-				"Ground": 1,
-				"Ice": 2,
-				"Normal": 2,
-				"Poison": 3,
-				"Psychic": 2,
-				"Rock": 2,
-				"Steel": 2,
-				"Water": 0
-			},
-			HPivs: {"spd":30}
-		},
-		"Water": {
-			damageTaken: {
-				"Bug": 0,
-				"Dark": 0,
-				"Dragon": 0,
-				"Electric": 1,
-				"Fairy": 0,
-				"Fighting": 0,
-				"Fire": 2,
-				"Flying": 0,
-				"Ghost": 0,
-				"Grass": 1,
-				"Ground": 0,
-				"Ice": 2,
-				"Normal": 0,
-				"Poison": 0,
-				"Psychic": 0,
-				"Rock": 0,
-				"Steel": 2,
-				"Water": 2
-			},
-			HPivs: {"atk":30, "def":30, "spa":30}
-		}
-	}
+	TypeChartGen6: Tools.BattleTypeChart
 };

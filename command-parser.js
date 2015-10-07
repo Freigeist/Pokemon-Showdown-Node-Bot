@@ -2,10 +2,11 @@
 	Command parser for Pokemon Showdown Bot
 */
 
-const dynCommandsDataFile = './data/commands.json';
+const dynCommandsDataFile = AppOptions.data + 'commands.json';
 const MAX_COMMAND_RECURSION = 10;
 const MAX_CMD_FLOOD = 30;
 const FLOOD_INTERVAL = 45 * 1000;
+const HELP_TIME_INTERVAL = 2 * 60 * 1000;
 
 var commands = exports.commands = {};
 var dynCommands = exports.dynCommands = {};
@@ -14,6 +15,19 @@ var tempVar = exports.tempVar = '';
 /* Resource Monitor */
 
 var resourceMonitor = exports.resourceMonitor = {
+	/* PM helper */
+	lasthelp: {},
+	counthelp: function (user) {
+		user = toId(user);
+		var now = Date.now();
+		for (var i in this.lasthelp) {
+			if (now - this.lasthelp[i] >= HELP_TIME_INTERVAL) delete this.lasthelp[i];
+		}
+		if (this.lasthelp[user]) return false;
+		this.lasthelp[user] = now;
+		return true;
+	},
+	/* Cmd Usage */
 	cmdusage: {},
 	cmdtimes: {},
 	lockedlist: {},
@@ -118,7 +132,7 @@ var saveDynCmds = exports.saveDinCmds =  function () {
 var commandTokens = exports.commandTokens = [];
 
 var reloadTokens = exports.reloadTokens = function () {
-	commandTokens = [];
+	commandTokens = exports.commandTokens = [];
 	if (Config.commandTokens && Config.commandTokens.length) {
 		for (var i = 0; i < Config.commandTokens.length; i++)
 			commandTokens.push(Config.commandTokens[i]);
@@ -126,7 +140,7 @@ var reloadTokens = exports.reloadTokens = function () {
 	if (typeof Config.commandChar === "string") commandTokens.push(Config.commandChar);
 	if (!commandTokens.length) {
 		error('No command Tokens, using "." by default');
-		commandTokens = ['.'];
+		commandTokens = exports.commandTokens = ['.'];
 	}
 };
 
@@ -250,6 +264,8 @@ var parse = exports.parse = function (room, by, msg) {
 		return;
 	}
 
+	if (Settings.callParseFilters(room, by, msg)) return;
+
 	var cmdToken = null;
 
 	for (var i = 0; i < commandTokens.length; i++) {
@@ -259,7 +275,10 @@ var parse = exports.parse = function (room, by, msg) {
 		}
 	}
 
-	if (!cmdToken) return;
+	if (!cmdToken) {
+		if (room.charAt(0) === ',' && Config.pmhelp && resourceMonitor.counthelp(by)) Bot.pm(by, Config.pmhelp);
+		return;
+	}
 
 	var toParse = msg.substr(cmdToken.length);
 	var spaceIndex = toParse.indexOf(' ');
