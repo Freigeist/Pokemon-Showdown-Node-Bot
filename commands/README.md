@@ -43,6 +43,7 @@ Misc commands for multiple features:
 
 Commands for getting pokemon info:
 
+ - `translate [move/item/ability/nature], (source lang), (target lang)` - Command for translating pokemon stuff
  - `poke` or `randompokemon` - Get a random pokemon
  - `gen [poke]` - Get pokemon, item, etc generation
  - `viablemoves [poke]` - Get viable moves from a Pokemon
@@ -92,6 +93,8 @@ Moderation
 ------------
 
 **Mod Settings:** Use `mod (room - optional), [moderation], [on/off]` to enable or disable moderations.
+
+**Moderation Exception:** Use `modex [rank/all]` to change moderation exception for a room.
 
 **Autoban**
  - `ab [user], [user]...` - Add users to blacklist
@@ -175,6 +178,38 @@ Commands for Tournaments feature
  - `tourstart` - Force start a tornament
  - `tourend` - Force end a tornament
 
+Games
+------------
+
+General commands for managing games:
+
+ - `game [Game Name], arg1=value1, arg2=value2...` - Start a game
+ - `endgame` - Force end a game
+ - `reloadgames` - Alias of `reload feature, games`
+
+
+**Hangman** and **Poke-Hangman**. Arguments: maxfails (max number of allowed fails, 0 or no specify this argument for infinite). Commands:
+
+ - `g [word/char]` - To guess words or characters
+ - `view` - To view the game status
+ - `end` - To force end the game
+
+**Anagrams** and **Poke-Anagrams**. Arguments: games (max number of rounds), points (number of ponts for winning), time (time to answer in seconds). Commands:
+
+ - `g [word]` - To guess the words
+ - `view` - To view the game status
+ - `end` - To force end the game
+
+**BlackJack**. Arguments: time (time for each turn in seconds), maxplayers (max number of players) Commands:
+
+ - `in` - To join the game. Use `out` to leave
+ - `players` - To view the players list
+ - `start` - To start the game
+ - `hand` - To view your hand
+ - `hit` - To get a new card to your hand
+ - `stand` - To finish your turn
+ - `end` - To force end the game
+ 
 Youtube
 ------------
 
@@ -190,23 +225,10 @@ Commands for auto-invite feature
   - `reloadroomauth [room]` - Reload roomauth if the autoinvite feature is not working well
   - `getroomauth [room]` - Upload roomauth to hastebin (dev command)
 
-Games
+Group Chats
 ------------
 
-General commands for managing games:
+Developing commands for GroupChats feature
 
- - `game [Game Name], arg1=value1, arg2=value2...` - Start a game
- - `endgame` - Force end a game
-
-
-**Poke-Hangman**. Arguments: maxfails (max number of allowed fails, 0 or no specify this argument for infinite). Commands:
-
- - `g [word/char]` - To guess words or characters
- - `view` - To view the game status
- - `end` - To force end the game
-
-**Poke-Anagrams**. Arguments: games (max number of rounds), points (number of ponts for winning), time (time to answer in seconds). Commands:
-
- - `g [word]` - To guess the words
- - `view` - To view the game status
- - `end` - To force end the game
+ - `ignoregroupchat [groupchat]` - temporarily ignore a groupchat (to leave a groupchat). Then you must edit the config to make it permanent
+ - `unignoregroupchat [groupchat]` - unignore a groupchat

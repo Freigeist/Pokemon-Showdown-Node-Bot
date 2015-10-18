@@ -7,10 +7,14 @@ Settings.addPermissions(['games']);
 exports.commands = {
 	/* Fast aliases */
 	//Add games aliases here. Example -> pa: 'pokeanagrams',
+	bj: 'blackjack',
 
 	/* Specific generators */
+	hangman: 'execgame',
+	anagrams: 'execgame',
 	pokehangman: 'execgame',
 	pokeanagrams: 'execgame',
+	blackjack: 'execgame',
 
 	/* General commands for games */
 	games: 'game',
@@ -52,5 +56,9 @@ exports.commands = {
 
 	execgame: function (arg, by, room, cmd) {
 		this.parse(this.cmdToken + "game " + cmd + "," + arg);
+	},
+
+	reloadgames: function (arg, by, room, cmd) {
+		this.parse(this.cmdToken + "reload feature, games");
 	}
 };

@@ -5,8 +5,9 @@
 /*
 * Connection Details
 *
-* If you don't know what is the server, port or serverid
-* run 'node serverconfig.js'
+* NOTE: Do NOT use "[server].psim.us", that is the client url
+* If you don't know what are the server, port or serverid values
+* run 'node serverconfig.js' to get them
 *
 */
 
@@ -55,8 +56,12 @@ exports.rooms = ['lobby'];
 * exports.rooms = ['room1', 'room2']; //For joining some rooms
 */
 
-exports.privateRooms = {
+exports.privateRooms = { //Rooms listed here will be ignored by seen command
 	//privateroomname: true
+};
+
+exports.ignoreRooms = { //Rooms listed here will be ignored by CommandParser (bot is "asleep" in those rooms)
+	//roomid: true
 };
 
 exports.initCmds = ['|/avatar 120']; // Other commands (avatar, blockchallenges, etc)
@@ -163,6 +168,21 @@ exports.moderation = {
 
 		MAX_STRETCH: 7,
 		MAX_REPEAT: 4
+	},
+
+	values: {
+		'spam-p': 3,
+		'spam': 4,
+		'spam-link': 4,
+		'flood-hard': 3,
+		'flood': 2,
+		'caps': 1,
+		'stretch': 1,
+		'banwords': 2,
+		'inapwords': 2,
+		'servers': 2,
+		'youtube': 2,
+		'spoiler': 2
 	},
 
 	modDefault: {
@@ -323,3 +343,22 @@ exports.github = {
 	secret: "",
 	port: 3420
 };
+
+/*
+* Groupchats
+*/
+
+exports.groupchats = {};
+
+exports.groupChatTryJoinInterval = 60 * 1000;
+
+/* Test example
+exports.groupchats['groupchat-ecuacion-test'] = {
+	toJoin: ['/join groupchat-ecuacion-test'],
+	onJoin: ['Hi guys!'],
+	onLeave: [],
+	roomAuth: {
+		'+': [/^.*$/]
+	}
+};
+*/

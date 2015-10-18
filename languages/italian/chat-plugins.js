@@ -3,7 +3,7 @@
 		/*
 		* Misc Commands
 		*/
-		pick: {'err': 'Devi impostare almeno due opzioni valide'},
+		pick: {'pick': 'Scelta a caso', 'err': 'Devi impostare almeno due opzioni valide'},
 		randomanswer: {
 			'answers': [
 				'Assegna punti a sì',
@@ -65,6 +65,20 @@
 		/*
 		* Pokemon Commands
 		*/
+		translate: {
+			'u1': 'Usage',
+			'u2': '[parola], (lingua di partenza), (lingua di arrivo)',
+			'lnot1': 'Lingua',
+			'lnot2': 'non disponibile. Lingue disponibili',
+			'not1': 'Ability, item, move o nature chiamato',
+			'not2': 'non trovato o non disponibile in traduzioni',
+			'not3': 'non trovato',
+			'tra': 'Traduzioni di',
+			'abilities': 'Ability',
+			'items': 'Item',
+			'moves': 'Move',
+			'natures': 'Nature'
+		},
 		randompokemon: {'err': 'C\'è stato un errore, riprova più tardi'},
 		gen: {
 			'err': 'C\'è stato un errore, riprova più tardi',

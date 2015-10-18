@@ -320,6 +320,9 @@ exports.checkConfig = function () {
 	var issue = function (text) {
 		console.log('issue'.yellow + '\t' + text);
 	};
+	if (Config.server && Config.server.substr(-8) === ".psim.us") {
+		issue('WARNING: YOUR SERVER URL ' + Config.server.red + ' SEEMS A CLIENT URL, NOT A SERVER ONE. USE ' + 'node serverconfig.js'.cyan + ' TO GET THE CORRECT SERVER, PORT AND SERVERID VALUES\n');
+	}
 	if (typeof Config.rooms !== 'string' && (typeof Config.rooms !== 'object' || typeof Config.rooms.length !== 'number')) {
 		issue('Config.rooms is not an array');
 		Config.rooms = [];
@@ -417,11 +420,11 @@ exports.translateCmd = function (cmd, data, lang) {
 };
 
 exports.translateGlobal = function (glob, data, lang) {
-	if (translations[lang] && translations[lang][glob]) {
+	if (translations[lang] && translations[lang][glob] && typeof translations[lang][glob][data] !== "undefined") {
 		return translations[lang][glob][data];
 	} else {
 		lang = 'english';
-		if (!translations[lang] || !translations[lang][glob]) {
+		if (!translations[lang] || !translations[lang][glob] || typeof translations[lang][glob][data] === "undefined") {
 			return '__(not found)__';
 		} else {
 			return translations[lang][glob][data];
@@ -1341,4 +1344,40 @@ exports.exportTeam = function (team) {
 		text += "\n";
 	}
 	return text;
+};
+
+exports.levenshtein = function (s, t, l) { // s = string 1, t = string 2, l = limit
+	// Original levenshtein distance function by James Westgate, turned out to be the fastest
+	var d = []; // 2d matrix
+	// Step 1
+	var n = s.length;
+	var m = t.length;
+	if (n === 0) return m;
+	if (m === 0) return n;
+	if (l && Math.abs(m - n) > l) return Math.abs(m - n);
+	// Create an array of arrays in javascript (a descending loop is quicker)
+	for (var i = n; i >= 0; i--) d[i] = [];
+	// Step 2
+	for (var i = n; i >= 0; i--) d[i][0] = i;
+	for (var j = m; j >= 0; j--) d[0][j] = j;
+	// Step 3
+	for (var i = 1; i <= n; i++) {
+		var s_i = s.charAt(i - 1);
+		// Step 4
+		for (var j = 1; j <= m; j++) {
+			// Check the jagged ld total so far
+			if (i === j && d[i][j] > 4) return n;
+			var t_j = t.charAt(j - 1);
+			var cost = (s_i === t_j) ? 0 : 1; // Step 5
+			// Calculate the minimum
+			var mi = d[i - 1][j] + 1;
+			var b = d[i][j - 1] + 1;
+			var c = d[i - 1][j - 1] + cost;
+			if (b < mi) mi = b;
+			if (c < mi) mi = c;
+			d[i][j] = mi; // Step 6
+		}
+	}
+	// Step 7
+	return d[n][m];
 };

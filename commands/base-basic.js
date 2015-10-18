@@ -2,13 +2,6 @@
 	Basic Commands
 */
 
-function setPermission(room, perm, rank) {
-	if (!Settings.settings.commands) Settings.settings.commands = {};
-	if (!Settings.settings.commands[room]) Settings.settings.commands[room] = {};
-	Settings.settings.commands[room][perm] = rank;
-	Settings.save();
-}
-
 Settings.addPermissions(['say']);
 
 exports.commands = {
@@ -90,9 +83,7 @@ exports.commands = {
 		if (arg === toId(by)) return this.pmReply(this.trad('self'));
 		if (Settings.seen[arg]) {
 			var dSeen = Settings.seen[arg];
-			var lang = Config.language || 'english';
-			if (Settings.settings['language'] && Settings.settings['language'][room]) lang = Settings.settings['language'][room];
-			text += '**' + (dSeen.name || arg).trim() + '** ' + this.trad('s1') + ' __' + Tools.getTimeAgo(dSeen.time, lang).trim() + (this.trad('s2') ? ('__ ' + this.trad('s2')) : '__');
+			text += '**' + (dSeen.name || arg).trim() + '** ' + this.trad('s1') + ' __' + Tools.getTimeAgo(dSeen.time, this.language).trim() + (this.trad('s2') ? ('__ ' + this.trad('s2')) : '__');
 			if (dSeen.room) {
 				switch (dSeen.action) {
 					case 'j':
