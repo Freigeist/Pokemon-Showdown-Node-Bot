@@ -99,6 +99,7 @@ function getTranslations (from, to, word) {
 Settings.addPermissions(['pokemon']);
 
 exports.commands = {
+	tl: 'translate',
 	tra: 'translate',
 	trans: 'translate',
 	translate: function (arg) {
