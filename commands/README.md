@@ -188,15 +188,21 @@ General commands for managing games:
  - `reloadgames` - Alias of `reload feature, games`
 
 
-**Hangman** and **Poke-Hangman**. Arguments: maxfails (max number of allowed fails, 0 or no specify this argument for infinite). Commands:
+**Hangman** and **Poke-Hangman**. Arguments: maxfails (max number of allowed fails, 0 or no specify this argument for infinite), lang (optional only for Poke-Hangman to change the language of the pokemon stuff). Commands:
 
  - `g [word/char]` - To guess words or characters
  - `view` - To view the game status
  - `end` - To force end the game
 
-**Anagrams** and **Poke-Anagrams**. Arguments: games (max number of rounds), points (number of ponts for winning), time (time to answer in seconds). Commands:
+**Anagrams** and **Poke-Anagrams**. Arguments: games (max number of rounds), points (number of ponts for winning), time (time to answer in seconds), lang (optional only for Poke-Anagrams to change the language of the pokemon stuff). Commands:
 
  - `g [word]` - To guess the words
+ - `view` - To view the game status
+ - `end` - To force end the game
+ 
+**Trivia**. Arguments: games (max number of rounds), points (number of ponts for winning), time (time to answer in seconds). Commands:
+
+ - `ta [answer]` - To answer the questions
  - `view` - To view the game status
  - `end` - To force end the game
 
@@ -209,7 +215,13 @@ General commands for managing games:
  - `hit` - To get a new card to your hand
  - `stand` - To finish your turn
  - `end` - To force end the game
- 
+
+**Kunc**. Arguments: games (max number of rounds), points (number of ponts for winning), time (time to answer in seconds). Commands:
+
+ - `g [pokemon]` - To guess the pokemon
+ - `view` - To view the game status
+ - `end` - To force end the game
+
 Youtube
 ------------
 

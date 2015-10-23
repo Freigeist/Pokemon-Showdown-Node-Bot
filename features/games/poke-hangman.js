@@ -59,7 +59,9 @@ var parser = function (type, data) {
 };
 
 exports.newGame = function (room, opts) {
-	var randObj = RandomGenerator.random();
+	var lang = Config.language || 'english';
+	if (Settings.settings['language'] && Settings.settings['language'][room]) lang = Settings.settings['language'][room];
+	var randObj = RandomGenerator.random(lang);
 	if (!randObj) return null;
 	var generatorOpts = {
 		room: room,
@@ -77,8 +79,26 @@ exports.newGame = function (room, opts) {
 				if (temp && temp < 0) return "maxfails";
 				generatorOpts.maxFails = temp;
 				break;
+			case 'lang':
+			case 'language':
+				var langAliases = {
+					'en': 'english',
+					'es': 'spanish',
+					'de': 'german',
+					'fr': 'french',
+					'it': 'italian'
+				};
+				if (typeof opts[i] !== "string") return "maxfails, lang (" + Object.keys(Tools.translations).join('/') + ")";
+				var lng = langAliases[toId(opts[i])] || toId(opts[i]);
+				if (!Tools.translations[lng]) return "maxfails, lang (" + Object.keys(Tools.translations).join('/') + ")";
+				generatorOpts.language = lng;
+				randObj = RandomGenerator.random(lng);
+				if (!randObj) return null;
+				generatorOpts.word = randObj.word;
+				generatorOpts.clue = randObj.clue;
+				break;
 			default:
-				return "maxfails";
+				return "maxfails, lang";
 		}
 	}
 	var game = new Hangman(generatorOpts, parser);
@@ -92,7 +112,6 @@ exports.commands = {
 	g: function (arg, by, room, cmd, game) {
 		game.guess(by.substr(1), arg);
 	},
-	v: 'view',
 	view: function (arg, by, room, cmd, game) {
 		this.restrictReply("**" + exports.title + ":** " + generateHang(game.status) + " | **" + game.clue + "** | " + game.said.sort().join(' '), 'games');
 	},
